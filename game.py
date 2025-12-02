@@ -15,9 +15,9 @@ BANK_COLOR = (3, 192, 60)
 TEXT = (20, 20, 20)
 
 IMAGES = {
-    "Farmer": pygame.transform.scale(pygame.image.load("farmer.png"), (60, 60)),
-    "Wolf": pygame.transform.scale(pygame.image.load("wolf.png"), (60, 60)),
-    "Goat": pygame.transform.scale(pygame.image.load("goat.png"), (60, 60)),
+    "Farmer": pygame.transform.scale(pygame.image.load("farmer.png"), (80, 80)),
+    "Wolf": pygame.transform.scale(pygame.image.load("wolf.png"), (70, 60)),
+    "Goat": pygame.transform.scale(pygame.image.load("goat.png"), (60, 70)),
     "Cabbage": pygame.transform.scale(pygame.image.load("cabbage.png"), (60, 60)),
 }
 
@@ -35,8 +35,8 @@ boat_side = 0
 state = [0, 0, 0, 0]
 GOAL = [1, 1, 1, 1]
 
-coords_left = [(90, 120), (90, 180), (90, 240), (90, 300)]
-coords_right = [(690, 120), (690, 180), (690, 240), (690, 300)]
+coords_left = [(40, 250), (100, 270), (40, 360), (110, 360)]
+coords_right = [(830, 250), (740, 270), (830, 360), (750, 360)]
 
 items = ["Farmer", "Wolf", "Goat", "Cabbage"]
 
@@ -76,23 +76,11 @@ def redraw(msg=None):
     SUN_POS = (WIDTH - 100, 80)  # x, y
     SUN_RADIUS = 40
     pygame.draw.circle(WIN, (255, 223, 0), SUN_POS, SUN_RADIUS)
-    WIN.blit(BOAT_IMG, (boat_x, boat_y))
 
-    # -------- السهم --------
-    if boat_side == 0:
-        arrow = ARROW_IMG
-        arrow_pos = (boat_x + 180, boat_y - 15)
-    else:
-        arrow = pygame.transform.flip(ARROW_IMG, True, False)
-        arrow_pos = (boat_x + 10, boat_y - 15)
-
-    WIN.blit(arrow, arrow_pos)
-
-    # Items
     for i, name in enumerate(items):
         if name in on_boat:
             idx = on_boat.index(name)
-            pos = [boat_x + 55 + idx * 45, boat_y + 43]
+            pos = [boat_x + 55 + idx * 45, boat_y + 25]
         elif name == dragging:
             pos = item_pos[name]
         else:
@@ -106,6 +94,22 @@ def redraw(msg=None):
 
     if msg:
         draw_text(WIN, msg, (30, 410), BIG, (200, 30, 30))
+
+
+    WIN.blit(BOAT_IMG, (boat_x, boat_y))
+
+    # -------- السهم --------
+    if boat_side == 0:
+        arrow = ARROW_IMG
+        arrow_pos = (boat_x + 180, boat_y - 15)
+    else:
+        arrow = pygame.transform.flip(ARROW_IMG, True, False)
+        arrow_pos = (boat_x + 10, boat_y - 15)
+
+    WIN.blit(arrow, arrow_pos)
+
+    # Items
+    
 
 
 def animate_boat(target_x):
@@ -155,7 +159,7 @@ def mainloop():
 
                     # لا شرط لوجود عنصرين — الفارمر وحده يكفي
                     boat_side = 1 - boat_side
-                    target = 220 if boat_side == 0 else 600
+                    target = 220 if boat_side == 0 else 500
                     animate_boat(target)
 
                     # Move passengers
