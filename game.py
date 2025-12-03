@@ -15,7 +15,6 @@ RIVER_COLOR = (70, 130, 180)
 BANK_COLOR = (3, 192, 60)
 TEXT = (20, 20, 20)
 
-# ---------------- تحميل الصور ----------------
 IMAGES = {
     "Farmer": pygame.transform.scale(pygame.image.load("farmer.png"), (100, 100)),
     "Wolf": pygame.transform.scale(pygame.image.load("wolf.png"), (70, 60)),
@@ -26,14 +25,14 @@ IMAGES = {
 BOAT_IMG = pygame.image.load("boat.png").convert_alpha()
 BOAT_IMG = pygame.transform.scale(BOAT_IMG, (220, 120))
 
-#الخسارة
+
 LOSS_IMG = pygame.image.load("youlost.png").convert_alpha()
 LOSS_IMG = pygame.transform.scale(LOSS_IMG, (300, 300))
-# الفوز
+
 WIN_IMG = pygame.image.load("youwin.png").convert_alpha()
 WIN_IMG = pygame.transform.scale(WIN_IMG, (300, 300))
 
-# -------- السهم --------
+
 ARROW_IMG = pygame.Surface((25, 25), pygame.SRCALPHA)
 pygame.draw.polygon(ARROW_IMG, (255, 80, 80), [(0, 0), (25, 12), (0, 25)])
 
@@ -54,7 +53,7 @@ offset_x = offset_y = 0
 item_pos = {name: coords_left[i][:] for i, name in enumerate(items)}
 on_boat = []
 
-# ---------------- نص ورسم ----------------
+
 BUTTON_RECT = pygame.Rect(50,400, 100, 40)
 
 def draw_text(surface, text, pos, font=FONT, color=TEXT):
@@ -100,9 +99,6 @@ def reset_game():
     for i, name in enumerate(items):
         item_pos[name] = coords_left[i][:]
 
-# ---------------------------------------------------
-#                  التعديل موجود هنا فقط
-# ---------------------------------------------------
 def redraw(msg=None):
     WIN.fill(BG)
     pygame.draw.rect(WIN, RIVER_COLOR, (0, HEIGHT//2, WIDTH, HEIGHT//2))
@@ -123,7 +119,7 @@ def redraw(msg=None):
     for i, name in enumerate(items):
 
         if name == dragging:
-            pos = item_pos[name]                     # ← يبقى يتبع الماوس
+            pos = item_pos[name]                     
         elif name in on_boat:
             idx = on_boat.index(name)
             if name == "Farmer":
@@ -135,7 +131,7 @@ def redraw(msg=None):
             pos = coords_right[i] if side == 1 else coords_left[i]
 
         if name != dragging:
-            item_pos[name] = pos[:]                  # ← منع تعديل موقعه أثناء السحب
+            item_pos[name] = pos[:]             
 
         WIN.blit(IMAGES[name], (pos[0] - 30, pos[1] - 30))
 
@@ -156,7 +152,7 @@ def redraw(msg=None):
     WIN.blit(arrow, arrow_pos)
 
     return try_again_rect
-# ---------------------------------------------------
+
 
 
 def animate_boat(target_x):
@@ -169,7 +165,6 @@ def animate_boat(target_x):
         pygame.time.delay(15)
     boat_x = target_x
 
-# ---------------- BFS ----------------
 def illegal(st):
     f, w, g, c, boat = st
     if w == g and f != w:
@@ -258,7 +253,6 @@ def play_bfs():
         pygame.display.update()
         pygame.time.delay(500)
 
-# ---------------- الحلقة الرئيسية ----------------
 def mainloop():
     global dragging, offset_x, offset_y, boat_x, boat_side, state, on_boat
     clock = pygame.time.Clock()
@@ -352,5 +346,5 @@ def mainloop():
                 item_pos[dragging] = [mx - offset_x, my - offset_y]
 
 
-if __name__ == "__main__":
+if __name__ == "__main__": 
     mainloop()
