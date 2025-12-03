@@ -17,7 +17,7 @@ TEXT = (20, 20, 20)
 
 # ---------------- تحميل الصور ----------------
 IMAGES = {
-    "Farmer": pygame.transform.scale(pygame.image.load("farmer.png"), (80, 80)),
+    "Farmer": pygame.transform.scale(pygame.image.load("farmer.png"), (100, 100)),
     "Wolf": pygame.transform.scale(pygame.image.load("wolf.png"), (70, 60)),
     "Goat": pygame.transform.scale(pygame.image.load("goat.png"), (60, 70)),
     "Cabbage": pygame.transform.scale(pygame.image.load("cabbage.png"), (60, 60)),
@@ -25,6 +25,15 @@ IMAGES = {
 
 BOAT_IMG = pygame.image.load("boat.png").convert_alpha()
 BOAT_IMG = pygame.transform.scale(BOAT_IMG, (220, 120))
+
+#الخسارة
+LOSS_IMG = pygame.image.load("youlost.png").convert_alpha()
+LOSS_IMG = pygame.transform.scale(LOSS_IMG, (300, 300))
+# الفوز
+WIN_IMG = pygame.image.load("youwin.png").convert_alpha()
+WIN_IMG = pygame.transform.scale(WIN_IMG, (300, 300))
+
+
 
 # -------- السهم --------
 ARROW_IMG = pygame.Surface((25, 25), pygame.SRCALPHA)
@@ -38,8 +47,8 @@ state = [0, 0, 0, 0]
 GOAL = [1, 1, 1, 1]
 
 
-coords_left = [(40, 250), (100, 270), (40, 360), (110, 360)]
-coords_right = [(830, 250), (740, 270), (830, 360), (750, 360)]
+coords_left = [(30, 230), (100, 270), (40, 360), (110, 360)]
+coords_right = [(820, 220), (740, 270), (830, 360), (750, 360)]
 
 items = ["Farmer", "Wolf", "Goat", "Cabbage"]
 
@@ -72,6 +81,36 @@ def draw_button():
     text = FONT.render("Solve", True, (255, 255, 255))
     WIN.blit(text, (BUTTON_RECT.x + 30, BUTTON_RECT.y + 13))
 
+
+def make_button(surface, text, x, y, w, h, bg=(200,80,80), fg=(255,255,255)):
+    """يرسم زر ويرجع الـ Rect الخاص فيه"""
+    rect = pygame.Rect(x, y, w, h)
+    pygame.draw.rect(surface, bg, rect, border_radius=10)
+    # إطار أغمق
+    pygame.draw.rect(surface, (bg[0]-40 if bg[0]>40 else 0, bg[1]-40 if bg[1]>40 else 0, bg[2]-40 if bg[2]>40 else 0),
+                     rect, 2, border_radius=10)
+    txt = FONT.render(text, True, fg)
+    tx = x + (w - txt.get_width())//2
+    ty = y + (h - txt.get_height())//2
+    surface.blit(txt, (tx, ty))
+    return rect
+
+def reset_game():
+    """إعادة تهيئة الحالة إلى البداية"""
+    global state, boat_side, boat_x, on_boat, item_pos, dragging, msg
+    state = [0,0,0,0]
+    boat_side = 0
+    boat_x = 220
+    on_boat = []
+    dragging = None
+    # إعادة مواقع العناصر إلى الضفة اليسرى
+    for i, name in enumerate(items):
+        item_pos[name] = coords_left[i][:]
+    msg = None
+
+
+
+
 def redraw(msg=None):
     WIN.fill(BG)
     pygame.draw.rect(WIN, RIVER_COLOR, (0, HEIGHT//2, WIDTH, HEIGHT//2))
@@ -100,7 +139,10 @@ def redraw(msg=None):
     for i, name in enumerate(items):
         if name in on_boat:
             idx = on_boat.index(name)
-            pos = [boat_x + 55 + idx * 45, boat_y + 25]
+            if name == "Farmer":
+                pos = [boat_x + 55 + idx * 45, boat_y + 3]   # رفع الصورة للأعلى
+            else:
+                pos = [boat_x + 55 + idx * 45, boat_y + 25]
         elif name == dragging:
             pos = item_pos[name]
         else:
@@ -110,10 +152,22 @@ def redraw(msg=None):
         item_pos[name] = pos[:]
         WIN.blit(IMAGES[name], (pos[0] - 30, pos[1] - 30))
 
+   
+
+
+    try_again_rect = None
+
     if msg:
-        draw_text(WIN, msg, (50, 410), BIG, (200, 30, 30))
+        # msg يحتوي نص الخسارة/الفوز
+        if "lost" in msg.lower():
+            WIN.blit(LOSS_IMG, (WIDTH//2 - LOSS_IMG.get_width()//2, HEIGHT//2 - LOSS_IMG.get_height()//2 - 20))
+        else:
+            WIN.blit(WIN_IMG, (WIDTH//2 - WIN_IMG.get_width()//2, HEIGHT//2 - WIN_IMG.get_height()//2 - 20))
 
+        # ارسم زر Try Again وأحصل على rect
+        try_again_rect = make_button(WIN, "Try Again", WIDTH//2 - 80, HEIGHT//2 + 140, 160, 45)
 
+    # في نهاية redraw() رجّعي try_again_rect لو حبيت استخدامه خارجياً
 # ---------------- الحركة ----------------
 
     WIN.blit(BOAT_IMG, (boat_x, boat_y))
@@ -127,7 +181,7 @@ def redraw(msg=None):
         arrow_pos = (boat_x + 10, boat_y - 15)
 
     WIN.blit(arrow, arrow_pos)
-
+    return try_again_rect
     # Items
     
 def animate_boat(target_x):
@@ -217,7 +271,7 @@ def play_bfs():
 
         # ---------------- تحريك السفينة ----------------
         boat_side = 1 - boat_side
-        target = 220 if boat_side == 0 else 600
+        target = 220 if boat_side == 0 else 460
         animate_boat(target)
 
         # ---------------- وضع العناصر على الطرف الآخر ----------------
@@ -239,13 +293,22 @@ def mainloop():
 
     while True:
         clock.tick(30)
-        redraw(msg)
+        try_again_rect = redraw(msg)
         pygame.display.update()
 
         if state == GOAL:
             msg = "You won! All safely across."
 
         for event in pygame.event.get():
+            # إذا في خسارة أو فوز، امنع أي تفاعل ما عدا زر Try Again
+            if msg:
+                if try_again_rect and event.type == pygame.MOUSEBUTTONDOWN:
+                    mx, my = event.pos
+                    if try_again_rect.collidepoint(mx, my):
+                        reset_game()
+                        msg = None
+                continue
+
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
@@ -253,6 +316,12 @@ def mainloop():
             # ---------------- Arrow click ----------------
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mx, my = event.pos
+                # ----- فحص زر TRY AGAIN -----
+                if msg and try_again_rect and try_again_rect.collidepoint(mx, my):
+                    reset_game()
+                    msg = None
+                    continue
+
                 arrow_rect = pygame.Rect(
                     (boat_x + 180 if boat_side == 0 else boat_x + 10),
                     boat_y - 15, 25, 25
@@ -268,7 +337,7 @@ def mainloop():
                         continue
 
                     boat_side = 1 - boat_side
-                    target = 220 if boat_side == 0 else 500
+                    target = 220 if boat_side == 0 else 460
                     animate_boat(target)
 
                     for name in on_boat:
