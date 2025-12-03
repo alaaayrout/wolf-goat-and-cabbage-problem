@@ -271,7 +271,7 @@ def play_bfs():
 
         # ---------------- تحريك السفينة ----------------
         boat_side = 1 - boat_side
-        target = 220 if boat_side == 0 else 600
+        target = 220 if boat_side == 0 else 460
         animate_boat(target)
 
         # ---------------- وضع العناصر على الطرف الآخر ----------------
@@ -300,6 +300,15 @@ def mainloop():
             msg = "You won! All safely across."
 
         for event in pygame.event.get():
+            # إذا في خسارة أو فوز، امنع أي تفاعل ما عدا زر Try Again
+            if msg:
+                if try_again_rect and event.type == pygame.MOUSEBUTTONDOWN:
+                    mx, my = event.pos
+                    if try_again_rect.collidepoint(mx, my):
+                        reset_game()
+                        msg = None
+                continue
+
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
@@ -328,7 +337,7 @@ def mainloop():
                         continue
 
                     boat_side = 1 - boat_side
-                    target = 220 if boat_side == 0 else 500
+                    target = 220 if boat_side == 0 else 460
                     animate_boat(target)
 
                     for name in on_boat:
