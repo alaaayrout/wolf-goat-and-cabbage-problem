@@ -33,8 +33,6 @@ LOSS_IMG = pygame.transform.scale(LOSS_IMG, (300, 300))
 WIN_IMG = pygame.image.load("youwin.png").convert_alpha()
 WIN_IMG = pygame.transform.scale(WIN_IMG, (300, 300))
 
-
-
 # -------- السهم --------
 ARROW_IMG = pygame.Surface((25, 25), pygame.SRCALPHA)
 pygame.draw.polygon(ARROW_IMG, (255, 80, 80), [(0, 0), (25, 12), (0, 25)])
@@ -45,7 +43,6 @@ boat_side = 0
 
 state = [0, 0, 0, 0]
 GOAL = [1, 1, 1, 1]
-
 
 coords_left = [(30, 230), (100, 270), (40, 360), (110, 360)]
 coords_right = [(820, 220), (740, 270), (830, 360), (750, 360)]
@@ -58,8 +55,8 @@ item_pos = {name: coords_left[i][:] for i, name in enumerate(items)}
 on_boat = []
 
 # ---------------- نص ورسم ----------------
-# ---- زر الحل ----
-BUTTON_RECT = pygame.Rect(50,400, 100, 40) #موقع وحجم زر الحل
+BUTTON_RECT = pygame.Rect(50,400, 100, 40)
+
 def draw_text(surface, text, pos, font=FONT, color=TEXT):
     img = font.render(text, True, color)
     surface.blit(img, pos)
@@ -75,18 +72,16 @@ def is_loss(s):
 def draw_banks(surface, s):
     pygame.draw.ellipse(surface, (3,192,60), (-160, 240, 420, 300))
     pygame.draw.ellipse(surface, (3,192,60),(640, 240, 420, 300))
+
 def draw_button():
     pygame.draw.rect(WIN, (255, 150, 150), BUTTON_RECT, border_radius=12)
     pygame.draw.rect(WIN, (200, 80, 80), BUTTON_RECT, border_radius=12)
     text = FONT.render("Solve", True, (255, 255, 255))
     WIN.blit(text, (BUTTON_RECT.x + 30, BUTTON_RECT.y + 13))
 
-
 def make_button(surface, text, x, y, w, h, bg=(200,80,80), fg=(255,255,255)):
-    """يرسم زر ويرجع الـ Rect الخاص فيه"""
     rect = pygame.Rect(x, y, w, h)
     pygame.draw.rect(surface, bg, rect, border_radius=10)
-    # إطار أغمق
     pygame.draw.rect(surface, (bg[0]-40 if bg[0]>40 else 0, bg[1]-40 if bg[1]>40 else 0, bg[2]-40 if bg[2]>40 else 0),
                      rect, 2, border_radius=10)
     txt = FONT.render(text, True, fg)
@@ -96,27 +91,26 @@ def make_button(surface, text, x, y, w, h, bg=(200,80,80), fg=(255,255,255)):
     return rect
 
 def reset_game():
-    """إعادة تهيئة الحالة إلى البداية"""
     global state, boat_side, boat_x, on_boat, item_pos, dragging
     state = [0,0,0,0]
     boat_side = 0
     boat_x = 220
     on_boat = []
     dragging = None
-    # إعادة مواقع العناصر إلى الضفة اليسرى
     for i, name in enumerate(items):
         item_pos[name] = coords_left[i][:]
-        
+
+# ---------------------------------------------------
+#                  التعديل موجود هنا فقط
+# ---------------------------------------------------
 def redraw(msg=None):
     WIN.fill(BG)
     pygame.draw.rect(WIN, RIVER_COLOR, (0, HEIGHT//2, WIDTH, HEIGHT//2))
     draw_banks(WIN, state)
     draw_button()
 
-    pygame.draw.circle(WIN, (255, 223, 0), (WIDTH - 100, 80), 40)
     WIN.blit(BOAT_IMG, (boat_x, boat_y))
 
-    # -------- السهم --------
     if boat_side == 0:
         arrow = ARROW_IMG
         arrow_pos = (boat_x + 180, boat_y - 15)
@@ -126,60 +120,45 @@ def redraw(msg=None):
 
     WIN.blit(arrow, arrow_pos)
 
-    # العناصر
-
-    SUN_POS = (WIDTH - 100, 80)  # x, y
-    SUN_RADIUS = 40
-    pygame.draw.circle(WIN, (255, 223, 0), SUN_POS, SUN_RADIUS)
-
     for i, name in enumerate(items):
-        if name in on_boat:
+
+        if name == dragging:
+            pos = item_pos[name]                     # ← يبقى يتبع الماوس
+        elif name in on_boat:
             idx = on_boat.index(name)
             if name == "Farmer":
-                pos = [boat_x + 55 + idx * 45, boat_y + 3]   # رفع الصورة للأعلى
+                pos = [boat_x + 55 + idx * 45, boat_y + 3]
             else:
                 pos = [boat_x + 55 + idx * 45, boat_y + 25]
-        elif name == dragging:
-            pos = item_pos[name]
         else:
             side = state[i]
             pos = coords_right[i] if side == 1 else coords_left[i]
 
-        item_pos[name] = pos[:]
+        if name != dragging:
+            item_pos[name] = pos[:]                  # ← منع تعديل موقعه أثناء السحب
+
         WIN.blit(IMAGES[name], (pos[0] - 30, pos[1] - 30))
-
-   
-
 
     try_again_rect = None
 
     if msg:
-        # msg يحتوي نص الخسارة/الفوز
         if "lost" in msg.lower():
             WIN.blit(LOSS_IMG, (WIDTH//2 - LOSS_IMG.get_width()//2, HEIGHT//2 - LOSS_IMG.get_height()//2 - 20))
         else:
             WIN.blit(WIN_IMG, (WIDTH//2 - WIN_IMG.get_width()//2, HEIGHT//2 - WIN_IMG.get_height()//2 - 20))
 
-        # ارسم زر Try Again وأحصل على rect
         try_again_rect = make_button(WIN, "Try Again", WIDTH//2 - 80, HEIGHT//2 + 140, 160, 45)
-
-    # في نهاية redraw() رجّعي try_again_rect لو حبيت استخدامه خارجياً
-# ---------------- الحركة ----------------
 
     WIN.blit(BOAT_IMG, (boat_x, boat_y))
 
-    # -------- السهم --------
-    if boat_side == 0:
-        arrow = ARROW_IMG
-        arrow_pos = (boat_x + 180, boat_y - 15)
-    else:
-        arrow = pygame.transform.flip(ARROW_IMG, True, False)
-        arrow_pos = (boat_x + 10, boat_y - 15)
-
+    arrow = ARROW_IMG if boat_side == 0 else pygame.transform.flip(ARROW_IMG, True, False)
+    arrow_pos = (boat_x + 180, boat_y - 15) if boat_side == 0 else (boat_x + 10, boat_y - 15)
     WIN.blit(arrow, arrow_pos)
+
     return try_again_rect
-    # Items
-    
+# ---------------------------------------------------
+
+
 def animate_boat(target_x):
     global boat_x
     step = 3 if target_x > boat_x else -3
@@ -236,7 +215,6 @@ def bfs_solve():
 
     return None
 
-# ---------------- BFS تشغيل ----------------
 def play_bfs():
     global state, boat_side, boat_x, on_boat, item_pos
 
@@ -251,17 +229,14 @@ def play_bfs():
         prev_state = state[:]
         prev_boat = boat_side
 
-        # ---------------- تحديد من يركب السفينة ----------------
         on_boat = []
         for i, (p, n) in enumerate(zip(prev_state, st[:4])):
-            # فقط العناصر التي تغيرت موقعها في نفس طرف السفينة
             if p != n and prev_state[i] == prev_boat:
                 on_boat.append(items[i])
-        # تأكد أن الفلاح دائمًا على السفينة
+
         if "Farmer" not in on_boat:
             on_boat.append("Farmer")
 
-        # ---------------- وضع العناصر على السفينة ----------------
         for idx, name in enumerate(on_boat):
             item_pos[name] = [boat_x + 55 + idx * 45, boat_y + 43]
 
@@ -269,13 +244,10 @@ def play_bfs():
         pygame.display.update()
         pygame.time.delay(500)
 
-        # ---------------- تحريك السفينة ----------------
         boat_side = 1 - boat_side
-        # ملاحظة: مرجع target متوافق مع إحداثيات القارب لديك (220 = يسار, 460 = يمين)
         target = 220 if boat_side == 0 else 460
         animate_boat(target)
 
-        # ---------------- وضع العناصر على الطرف الآخر ----------------
         state[:] = st[:4]
         for i, name in enumerate(items):
             side = state[i]
@@ -285,7 +257,7 @@ def play_bfs():
         redraw()
         pygame.display.update()
         pygame.time.delay(500)
-        
+
 # ---------------- الحلقة الرئيسية ----------------
 def mainloop():
     global dragging, offset_x, offset_y, boat_x, boat_side, state, on_boat
@@ -301,7 +273,6 @@ def mainloop():
             msg = "You won! All safely across."
 
         for event in pygame.event.get():
-            # إذا في خسارة أو فوز، امنع أي تفاعل ما عدا زر Try Again
             if msg:
                 if try_again_rect and event.type == pygame.MOUSEBUTTONDOWN:
                     mx, my = event.pos
@@ -314,32 +285,24 @@ def mainloop():
                 pygame.quit()
                 sys.exit()
 
-            # ---------------- Arrow click ----------------
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mx, my = event.pos
-                # ----- فحص زر TRY AGAIN -----
-                if msg and try_again_rect and try_again_rect.collidepoint(mx, my):
-                    reset_game()
-                    msg = None
-                    continue
 
                 arrow_rect = pygame.Rect(
                     (boat_x + 180 if boat_side == 0 else boat_x + 10),
                     boat_y - 15, 25, 25
                )
+
                 if BUTTON_RECT.collidepoint(event.pos):
-                    # أولاً نعيد تهيئة اللعبة محليًا ثم نشغل حل الـ BFS فورًا
                     reset_game()
-                    msg = None   # important: msg هنا محلي داخل mainloop
-                    # نحدّث الشاشة بسرعة قبل بدء التحريك الآلي حتى يرى المستخدم البداية
+                    msg = None
                     redraw(msg)
                     pygame.display.update()
                     pygame.time.delay(300)
                     play_bfs()
                     continue
-                
-                if arrow_rect.collidepoint(mx, my):
 
+                if arrow_rect.collidepoint(mx, my):
                     if "Farmer" not in on_boat:
                         msg = "Farmer must be on the boat."
                         continue
@@ -356,7 +319,6 @@ def mainloop():
                     msg = is_loss(state)
                     continue
 
-                # --------- Drag start ---------
                 for name, pos in item_pos.items():
                     dx = mx - pos[0]
                     dy = my - pos[1]
@@ -365,24 +327,26 @@ def mainloop():
                         offset_x, offset_y = dx, dy
                         break
 
-            # --------- Drop ---------
             elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 if dragging:
                     x, y = item_pos[dragging]
 
-                    if boat_x <= x <= boat_x + 220 and boat_y <= y <= boat_y + 120:
-                        if dragging not in on_boat and len(on_boat) < 2:
-                            on_boat.append(dragging)
+                    inside_boat = (
+                        boat_x <= x <= boat_x + 220 and
+                        boat_y <= y <= boat_y + 120
+                    )
+
+                    if inside_boat:
+                        if dragging not in on_boat:
+                            if len(on_boat) < 2:
+                                on_boat.append(dragging)
+                                state[items.index(dragging)] = boat_side
                     else:
-                        side = state[items.index(dragging)]
-                        item_pos[dragging] = (
-                            coords_right[items.index(dragging)]
-                            if side == 1 else coords_left[items.index(dragging)]
-                        )
+                        if dragging in on_boat:
+                            on_boat.remove(dragging)
 
                     dragging = None
 
-            # --------- Dragging movement ---------
             elif event.type == pygame.MOUSEMOTION and dragging:
                 mx, my = event.pos
                 item_pos[dragging] = [mx - offset_x, my - offset_y]
