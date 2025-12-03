@@ -106,7 +106,9 @@ def redraw(msg=None):
     draw_button()
 
     WIN.blit(BOAT_IMG, (boat_x, boat_y))
-
+    SUN_POS = (WIDTH - 100, 80)  # x, y
+    SUN_RADIUS = 40
+    pygame.draw.circle(WIN, (255, 223, 0), SUN_POS, SUN_RADIUS)
     if boat_side == 0:
         arrow = ARROW_IMG
         arrow_pos = (boat_x + 180, boat_y - 15)
