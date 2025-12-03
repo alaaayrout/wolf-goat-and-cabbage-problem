@@ -97,7 +97,7 @@ def make_button(surface, text, x, y, w, h, bg=(200,80,80), fg=(255,255,255)):
 
 def reset_game():
     """إعادة تهيئة الحالة إلى البداية"""
-    global state, boat_side, boat_x, on_boat, item_pos, dragging, msg
+    global state, boat_side, boat_x, on_boat, item_pos, dragging
     state = [0,0,0,0]
     boat_side = 0
     boat_x = 220
@@ -106,11 +106,7 @@ def reset_game():
     # إعادة مواقع العناصر إلى الضفة اليسرى
     for i, name in enumerate(items):
         item_pos[name] = coords_left[i][:]
-    msg = None
-
-
-
-
+        
 def redraw(msg=None):
     WIN.fill(BG)
     pygame.draw.rect(WIN, RIVER_COLOR, (0, HEIGHT//2, WIDTH, HEIGHT//2))
@@ -245,6 +241,10 @@ def play_bfs():
     global state, boat_side, boat_x, on_boat, item_pos
 
     sol = bfs_solve()
+    if not sol:
+        print("No solution found by BFS.")
+        return
+
     print("BFS Solution:", sol)
 
     for st in sol[1:]:
@@ -271,6 +271,7 @@ def play_bfs():
 
         # ---------------- تحريك السفينة ----------------
         boat_side = 1 - boat_side
+        # ملاحظة: مرجع target متوافق مع إحداثيات القارب لديك (220 = يسار, 460 = يمين)
         target = 220 if boat_side == 0 else 460
         animate_boat(target)
 
@@ -284,7 +285,7 @@ def play_bfs():
         redraw()
         pygame.display.update()
         pygame.time.delay(500)
-
+        
 # ---------------- الحلقة الرئيسية ----------------
 def mainloop():
     global dragging, offset_x, offset_y, boat_x, boat_side, state, on_boat
@@ -327,9 +328,16 @@ def mainloop():
                     boat_y - 15, 25, 25
                )
                 if BUTTON_RECT.collidepoint(event.pos):
+                    # أولاً نعيد تهيئة اللعبة محليًا ثم نشغل حل الـ BFS فورًا
+                    reset_game()
+                    msg = None   # important: msg هنا محلي داخل mainloop
+                    # نحدّث الشاشة بسرعة قبل بدء التحريك الآلي حتى يرى المستخدم البداية
+                    redraw(msg)
+                    pygame.display.update()
+                    pygame.time.delay(300)
                     play_bfs()
                     continue
-
+                
                 if arrow_rect.collidepoint(mx, my):
 
                     if "Farmer" not in on_boat:
